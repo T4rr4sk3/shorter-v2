@@ -1,0 +1,19 @@
+name: shorter-v2
+services:
+  database:
+    container_name: shorter-database
+    image: postgres:17.0-alpine3.20
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_USER: shorter
+      POSTGRES_DB: app
+      LANG: pt_BR.UTF-8
+      LC_ALL: pt_BR.UTF-8
+      POSTGRES_INITDB_ARGS: "--locale=pt_BR.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/create.sql:/docker-entrypoint-initdb.d/init.sql
+#      - database-data:/var/lib/postgresql/data
+#volumes:
+#  database-data:

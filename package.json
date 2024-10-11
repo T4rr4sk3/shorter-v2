@@ -1,6 +1,6 @@
 {
   "name": "shorter-v2",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
@@ -11,7 +11,11 @@
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "controller": "node ace make:controller",
+    "validator": "node ace make:validator",
+    "model": "node ace make:model",
+    "view": "node ace make:view"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
@@ -41,7 +45,9 @@
     "@japa/plugin-adonisjs": "^3.0.1",
     "@japa/runner": "^3.1.4",
     "@swc/core": "^1.7.22",
+    "@types/luxon": "^3.4.2",
     "@types/node": "^22.5.1",
+    "@types/qrcode": "^1.5.5",
     "eslint": "^9.9.1",
     "hot-hook": "^0.3.0",
     "pino-pretty": "^11.2.2",
@@ -55,7 +61,12 @@
     "@adonisjs/cors": "^2.2.1",
     "@adonisjs/lucid": "^21.2.0",
     "@vinejs/vine": "^2.1.0",
-    "reflect-metadata": "^0.2.2"
+    "edge.js": "^6.2.0",
+    "luxon": "^3.5.0",
+    "pg": "^8.13.0",
+    "qrcode": "^1.5.4",
+    "reflect-metadata": "^0.2.2",
+    "tedious": "^18.6.1"
   },
   "hotHook": {
     "boundaries": [
