@@ -6,30 +6,30 @@ import { idValidator } from '#validators/general'
 import { DateTime } from 'luxon'
 import Link from '#models/link'
 import { CodeGenerator } from '../domain/code_generator.js'
+import LinkGroup from '#models/link_group'
 
 export default class LinksController {
   public async getAll() {
-    return Link.all()
+    return Link.query().preload('linkGroup' as any)
   }
 
   public async createLink({ request }: HttpContext) {
-    const link = await createLinkValidator.validate(request.body())
-    const expiresNormalized = link.expiresIn ? DateTime.fromISO(link.expiresIn) : null
+    const newLink = await createLinkValidator.validate(request.body())
+    const expiresNormalized = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
     if (expiresNormalized && expiresNormalized.diffNow().milliseconds < 0)
       throw new ApplicationError('Expiration time is invalid')
-
+    const groupExists = await this.groupExists(newLink.groupId)
+    if (!groupExists) throw new ApplicationError('Group does not exist')
     const randomCode = new CodeGenerator().generate()
     return Link.create({
-      name: link.name,
+      ...newLink,
       code: randomCode,
-      url: link.url,
       expiresAt: expiresNormalized,
     })
   }
 
   public async updateLink({ request }: HttpContext) {
-    const param = Number.parseInt(request.param('id'), 10)
-    const linkId = await idValidator.validate(param)
+    const linkId = await idValidator.validate(request.param('id'))
     const newLink = await updateLinkValidator.validate(request.body())
     const existingLink = await Link.find(linkId)
     if (!existingLink) throw new ApplicationError('Link not found')
@@ -38,10 +38,15 @@ export default class LinksController {
   }
 
   public async deleteLink({ request }: HttpContext) {
-    const param = Number.parseInt(request.param('id'), 10)
-    const linkId = await idValidator.validate(param)
+    const linkId = await idValidator.validate(request.param('id'))
     const existingLink = await Link.find(linkId)
     await existingLink?.delete()
     return null
+  }
+
+  private async groupExists(groupId: number | undefined) {
+    if (!groupId) return true
+    const group = await LinkGroup.find(groupId)
+    return Boolean(group)
   }
 }

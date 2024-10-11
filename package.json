@@ -15,7 +15,7 @@
     "controller": "node ace make:controller",
     "validator": "node ace make:validator",
     "model": "node ace make:model",
-    "view": "node ace make:view"
+    "list-routes": "node ace list:routes"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
@@ -61,7 +61,6 @@
     "@adonisjs/cors": "^2.2.1",
     "@adonisjs/lucid": "^21.2.0",
     "@vinejs/vine": "^2.1.0",
-    "edge.js": "^6.2.0",
     "luxon": "^3.5.0",
     "pg": "^8.13.0",
     "qrcode": "^1.5.4",

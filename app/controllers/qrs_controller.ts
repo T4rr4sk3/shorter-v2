@@ -67,7 +67,7 @@ export default class QRsController {
           if (err) logger.error(err.message + '\nFailed to delete the file ' + file)
         })
       },
-      300,
+      500,
       path
     )
   }
