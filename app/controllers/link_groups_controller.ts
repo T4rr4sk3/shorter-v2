@@ -17,10 +17,10 @@ export default class LinkGroupsController {
   }
 
   public async updateGroup({ request }: HttpContext) {
-    const param = Number.parseInt(request.param('id'), 10)
-    const validId = idValidator.validate(param)
+    const validId = idValidator.validate(request.param('id'))
     const validBody = updateGroupValidator.validate(request.body())
     const [id, newGroup] = await Promise.all([validId, validBody])
+    if (id === newGroup.parentGroupId) throw new ApplicationError('Circular reference not allowed')
     const existingGroup = await LinkGroup.find(id)
     if (!existingGroup) throw new ApplicationError('Group not found')
     const parentGroupExists = await this.existsGroup(newGroup.parentGroupId)
@@ -31,8 +31,7 @@ export default class LinkGroupsController {
   }
 
   public async deleteGroup({ request }: HttpContext) {
-    const param = Number.parseInt(request.param('id'), 10)
-    const id = await idValidator.validate(param)
+    const id = await idValidator.validate(request.param('id'))
     const existingGroup = await LinkGroup.find(id)
     await existingGroup?.delete()
     return null

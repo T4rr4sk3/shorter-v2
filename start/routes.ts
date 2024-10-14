@@ -6,10 +6,12 @@ const RedirectsController = () => import('#controllers/redirects_controller')
 const LinksController = () => import('#controllers/links_controller')
 const LinkGroupsController = () => import('#controllers/link_groups_controller')
 const LinkGroupTreesController = () => import('#controllers/link_group_trees_controller')
+const LinkTagsController = () => import('#controllers/link_tags_controller')
 
 // links
 router.get('/links', [LinksController, 'getAll'])
 router.post('/link', [LinksController, 'createLink'])
+router.get('/link/:id', [LinksController, 'getById'])
 router.patch('/link/:id', [LinksController, 'updateLink'])
 router.delete('/link/:id', [LinksController, 'deleteLink'])
 
@@ -29,7 +31,11 @@ router.get('/link-group-tree/group-path/:groupId', [
 ])
 
 // tags
-// to be made
+router.get('/tags', [LinkTagsController, 'getAll'])
+router.get('/tags-with-count', [LinkTagsController, 'getAllWithCount'])
+router.post('/tag', [LinkTagsController, 'createTag'])
+router.patch('/tag/:id', [LinkTagsController, 'updateTag'])
+router.delete('/tag/:id', [LinkTagsController, 'deleteTag'])
 
 // index
 router.get('/', [IndicesController])

@@ -1,5 +1,7 @@
 drop schema if exists coppetec cascade;
 
+-- Cópia do banco real --
+
 create schema coppetec;
 
 create table coppetec.shortLinks_grupos (

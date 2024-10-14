@@ -2,15 +2,24 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import { createLinkValidator, updateLinkValidator } from '#validators/link'
 import { ApplicationError } from '#exceptions/application_error'
+import { CodeGenerator } from '../domain/code_generator.js'
 import { idValidator } from '#validators/general'
+import db from '@adonisjs/lucid/services/db'
+import LinkGroup from '#models/link_group'
 import { DateTime } from 'luxon'
 import Link from '#models/link'
-import { CodeGenerator } from '../domain/code_generator.js'
-import LinkGroup from '#models/link_group'
 
 export default class LinksController {
   public async getAll() {
-    return Link.query().preload('linkGroup' as any)
+    return Link.query().preload('linkTags').preload('linkGroup')
+  }
+
+  public async getById({ request }: HttpContext) {
+    const linkId = await idValidator.validate(request.param('id'))
+    const link = await Link.find(linkId)
+    if (!link) throw new ApplicationError('Link not found')
+    await Promise.all([link.load('linkGroup'), link.load('linkTags')])
+    return link
   }
 
   public async createLink({ request }: HttpContext) {
@@ -21,11 +30,19 @@ export default class LinksController {
     const groupExists = await this.groupExists(newLink.groupId)
     if (!groupExists) throw new ApplicationError('Group does not exist')
     const randomCode = new CodeGenerator().generate()
-    return Link.create({
-      ...newLink,
-      code: randomCode,
-      expiresAt: expiresNormalized,
-    })
+    const trx = await db.transaction()
+    const linkCreated = new Link()
+    linkCreated.name = newLink.name
+    linkCreated.url = newLink.url
+    linkCreated.code = randomCode
+    linkCreated.groupId = newLink.groupId
+    linkCreated.expiresAt = expiresNormalized
+    linkCreated.useTransaction(trx)
+    await linkCreated.save()
+    if (newLink.tags) {
+      await linkCreated.related('linkTags').attach(newLink.tags, trx)
+    }
+    return trx.commit().then(() => linkCreated)
   }
 
   public async updateLink({ request }: HttpContext) {
@@ -33,8 +50,20 @@ export default class LinksController {
     const newLink = await updateLinkValidator.validate(request.body())
     const existingLink = await Link.find(linkId)
     if (!existingLink) throw new ApplicationError('Link not found')
+    const trx = await db.transaction()
+    existingLink.useTransaction(trx)
     existingLink.name = newLink.name
-    return existingLink.save()
+    if (newLink.groupId) {
+      existingLink.groupId = newLink.groupId
+    } else {
+      existingLink.related('linkGroup').dissociate()
+    }
+    if (newLink.tags) {
+      await existingLink.related('linkTags').sync(newLink.tags)
+    }
+    await existingLink.save().then(() => trx.commit())
+    await Promise.all([existingLink.load('linkTags'), existingLink.load('linkGroup')])
+    return existingLink
   }
 
   public async deleteLink({ request }: HttpContext) {
@@ -44,7 +73,7 @@ export default class LinksController {
     return null
   }
 
-  private async groupExists(groupId: number | undefined) {
+  private async groupExists(groupId: number | null) {
     if (!groupId) return true
     const group = await LinkGroup.find(groupId)
     return Boolean(group)

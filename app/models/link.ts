@@ -31,9 +31,6 @@ export default class Link extends BaseModel {
   @column({ columnName: 'grupo_id' })
   declare groupId: number | null
 
-  @belongsTo(() => LinkGroup, { localKey: 'id', foreignKey: 'groupId' })
-  declare linkGroup: BelongsTo<typeof LinkGroup> | null
-
   @manyToMany(() => LinkTag, {
     relatedKey: 'id',
     pivotForeignKey: 'shortlink_id',
@@ -41,6 +38,9 @@ export default class Link extends BaseModel {
     pivotTable: 'coppetec.shortlinks_link_has_tags',
   })
   declare linkTags: ManyToMany<typeof LinkTag>
+
+  @belongsTo(() => LinkGroup, { localKey: 'id', foreignKey: 'groupId' })
+  declare linkGroup: BelongsTo<typeof LinkGroup>
 
   public isExpired() {
     if (!this.expiresAt) return false
