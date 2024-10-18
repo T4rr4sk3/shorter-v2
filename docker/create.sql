@@ -7,7 +7,8 @@ create schema coppetec;
 create table coppetec.shortLinks_grupos (
   id serial primary key,
   nome text not null unique,
-  grupo_id int null,
+  criado_em timestamp not null default CURRENT_TIMESTAMP,
+  grupo_id int null, -- parent
 
   constraint fk_grupo foreign key (grupo_id)
   references coppetec.shortLinks_grupos(id) on delete set null
@@ -29,7 +30,8 @@ create table coppetec.shortLinks (
 
 create table coppetec.shortLinks_tags (
   id serial primary key,
-  nome text not null unique
+  nome text not null unique,
+  criado_em timestamp not null default CURRENT_TIMESTAMP
 );
 
 create table coppetec.shortLinks_link_has_tags (

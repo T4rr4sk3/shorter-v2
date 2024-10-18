@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
-import { createLinkValidator, updateLinkValidator } from '#validators/link'
+import { createLinkValidator, getLinkValidator, updateLinkValidator } from '#validators/link'
 import { ApplicationError } from '#exceptions/application_error'
 import { CodeGenerator } from '../domain/code_generator.js'
 import { idValidator } from '#validators/general'
@@ -10,15 +10,37 @@ import { DateTime } from 'luxon'
 import Link from '#models/link'
 
 export default class LinksController {
-  public async getAll() {
-    return Link.query().preload('linkTags').preload('linkGroup')
+  public async getAll({ request }: HttpContext) {
+    const options = await getLinkValidator.validate(request.qs())
+    return Link.query()
+      .if(options.name, (linkQ) => {
+        linkQ.whereILike('name', options.name!)
+      })
+      .if(
+        options.groupId,
+        (linkQ) => {
+          linkQ.where('groupId', options.groupId!)
+        },
+        (linkQ) => {
+          if (options.noGroup) linkQ.whereNull('groupId')
+        }
+      )
+      .if(options.tag, (linkQ) => {
+        linkQ.whereHas('linkTags', (tagQ) => tagQ.where('id', options.tag!))
+      })
+      .if(options.tags, (linkQ) => {
+        linkQ.whereHas('linkTags', (tagQ) => tagQ.whereIn('id', options.tags || []))
+      })
+      .preload('linkTags', (tagsQ) => tagsQ.orderBy('id', 'desc'))
+      .preload('linkGroup')
+      .orderBy('id', 'desc')
   }
 
   public async getById({ request }: HttpContext) {
     const linkId = await idValidator.validate(request.param('id'))
     const link = await Link.find(linkId)
     if (!link) throw new ApplicationError('Link not found')
-    await Promise.all([link.load('linkGroup'), link.load('linkTags')])
+    await link.load('linkGroup').then(() => link.load('linkTags'))
     return link
   }
 

@@ -25,4 +25,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   MSSQL_USER: Env.schema.string(),
   MSSQL_PASSWORD: Env.schema.string.optional(),
   MSSQL_DATABASE: Env.schema.string(),
+  // security
+  CRYPTO_ALG: Env.schema.enum(['SHA256', 'SHA384', 'SHA512']),
+  AUTH_USER: Env.schema.string(),
+  AUTH_SALT: Env.schema.string(),
 })

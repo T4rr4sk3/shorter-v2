@@ -1,7 +1,7 @@
 import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import { DateTime } from 'luxon'
 import Link from './link.js'
-//import { DateTime } from 'luxon'
 
 export default class LinkTag extends BaseModel {
   static table = 'coppetec.shortlinks_tags'
@@ -11,6 +11,9 @@ export default class LinkTag extends BaseModel {
 
   @column({ columnName: 'nome' })
   declare name: string
+
+  @column.dateTime({ autoCreate: true, columnName: 'criado_em' })
+  declare createdAt: DateTime
 
   @manyToMany(() => Link, {
     relatedKey: 'id',

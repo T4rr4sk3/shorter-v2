@@ -1,16 +1,22 @@
 import { ApplicationError } from '#exceptions/application_error'
 import LinkTag from '#models/link_tag'
 import { idValidator } from '#validators/general'
-import { createTagValidator, updateTagValidator } from '#validators/tag'
+import { createTagValidator, getTagValidator, updateTagValidator } from '#validators/tag'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class LinkTagsController {
-  async getAll({}: HttpContext) {
-    return LinkTag.all()
-  }
-
-  async getAllWithCount({}: HttpContext) {
-    return LinkTag.query().withCount('links')
+  async getAll({ request }: HttpContext) {
+    const { name } = await getTagValidator.validate(request.qs())
+    const tags = await LinkTag.query()
+      .withCount('links')
+      .if(name, (tagQ) => {
+        tagQ.whereILike('name', name!)
+      })
+      .orderBy('id', 'desc')
+    return tags.map((tag) => ({
+      ...tag.toJSON(),
+      links: tag.$extras.links_count,
+    }))
   }
 
   public async createTag({ request }: HttpContext) {
@@ -33,5 +39,13 @@ export default class LinkTagsController {
     const existingTag = await LinkTag.find(id)
     await existingTag?.delete()
     return null
+  }
+
+  public async getById({ request }: HttpContext) {
+    const tagId = await idValidator.validate(request.param('id'))
+    const existingTag = await LinkTag.find(tagId)
+    if (!existingTag) throw new ApplicationError('Tag not found')
+    await existingTag.load('links', (linkQ) => linkQ.preload('linkGroup').orderBy('id'))
+    return existingTag
   }
 }

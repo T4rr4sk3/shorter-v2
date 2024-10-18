@@ -1,7 +1,7 @@
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { DateTime } from 'luxon'
 import Link from './link.js'
-//import { DateTime } from 'luxon'
 
 export default class LinkGroup extends BaseModel {
   static table = 'coppetec.shortlinks_grupos'
@@ -14,6 +14,9 @@ export default class LinkGroup extends BaseModel {
 
   @column({ columnName: 'grupo_id' })
   declare parentGroupId: number | null
+
+  @column.dateTime({ autoCreate: true, columnName: 'criado_em' })
+  declare createdAt: DateTime
 
   @hasMany(() => Link, { foreignKey: 'groupId' })
   declare links: HasMany<typeof Link>
