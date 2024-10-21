@@ -29,4 +29,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   CRYPTO_ALG: Env.schema.enum(['SHA256', 'SHA384', 'SHA512']),
   AUTH_USER: Env.schema.string(),
   AUTH_SALT: Env.schema.string(),
+  AUTH_PASS: Env.schema.string.optional(),
+  AUTH_SECRET: Env.schema.string.optional(),
+  AUTH_EXP: Env.schema.string.optional(),
 })

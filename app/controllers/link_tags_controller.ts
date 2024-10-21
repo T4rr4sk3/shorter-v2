@@ -21,6 +21,7 @@ export default class LinkTagsController {
 
   public async createTag({ request }: HttpContext) {
     const newTag = await createTagValidator.validate(request.body())
+    if (!newTag.color) newTag.color = '#42A5F5'
     return LinkTag.create(newTag)
   }
 

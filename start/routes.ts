@@ -1,5 +1,6 @@
 import router from '@adonisjs/core/services/router'
 
+import '../resources/routes/auth_routes.js'
 import '../resources/routes/link_group_tree_routes.js'
 import '../resources/routes/group_routes.js'
 import '../resources/routes/link_routes.js'

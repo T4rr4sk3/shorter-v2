@@ -12,6 +12,9 @@ export default class LinkTag extends BaseModel {
   @column({ columnName: 'nome' })
   declare name: string
 
+  @column({ columnName: 'cor' })
+  declare color: string
+
   @column.dateTime({ autoCreate: true, columnName: 'criado_em' })
   declare createdAt: DateTime
 

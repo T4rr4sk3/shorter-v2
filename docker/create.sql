@@ -31,6 +31,7 @@ create table coppetec.shortLinks (
 create table coppetec.shortLinks_tags (
   id serial primary key,
   nome text not null unique,
+  cor text not null default '#000',
   criado_em timestamp not null default CURRENT_TIMESTAMP
 );
 
