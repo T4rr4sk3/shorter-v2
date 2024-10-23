@@ -9,14 +9,15 @@ export default class LoginHashVerifier {
   private readonly salt: string
   private readonly pass: string | undefined
 
-  constructor(encoder: CryptoEncoder = new CryptoDefaultEncoder()) {
-    this.encoder = encoder
+  constructor(cryptoEncoder: CryptoEncoder = new CryptoDefaultEncoder()) {
+    this.encoder = cryptoEncoder
     this.user = env.get('AUTH_USER')
     this.salt = env.get('AUTH_SALT')
     this.pass = env.get('AUTH_PASS')
   }
 
   verify(user: string, hash: string, timestamp?: string | number) {
+    //if (env.get('NODE_ENV') === 'development') return
     const hashToVerify = this.createHash(user, timestamp)
     if (hashToVerify !== hash) throw new ApplicationError('Invalid login (11)', 401)
     const correctHash = this.createHash(this.user, timestamp)

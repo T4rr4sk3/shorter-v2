@@ -23,7 +23,8 @@ export default class LinkGroupsController {
     const parentGroupExists = await this.existsGroup(newLinkGroup.parentGroupId)
     if (!parentGroupExists) throw new ApplicationError('Parent group not exists')
     const groupCreated = await LinkGroup.create(newLinkGroup)
-    return groupCreated.load('parentGroup').then(() => groupCreated)
+    if (groupCreated.parentGroupId) await groupCreated.load('parentGroup')
+    return groupCreated
   }
 
   public async updateGroup({ request }: HttpContext) {

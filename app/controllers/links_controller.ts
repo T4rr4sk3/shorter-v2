@@ -61,6 +61,7 @@ export default class LinksController {
     linkCreated.expiresAt = expiresNormalized
     linkCreated.useTransaction(trx)
     await linkCreated.save()
+    if (newLink.groupId) await linkCreated.load('linkGroup')
     if (newLink.tags) {
       await linkCreated.related('linkTags').attach(newLink.tags, trx)
     }
