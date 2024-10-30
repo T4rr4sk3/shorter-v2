@@ -7,11 +7,11 @@ const dbConfig = defineConfig({
     postgres: {
       client: 'pg',
       connection: {
-        host: env.get('PG_HOST'),
-        port: env.get('PG_PORT'),
-        user: env.get('PG_USER'),
-        password: env.get('PG_PASSWORD'),
-        database: env.get('PG_DATABASE'),
+        host: env.get('DB_HOST'),
+        port: env.get('DB_PORT'),
+        user: env.get('DB_USER'),
+        password: env.get('DB_PASSWORD'),
+        database: env.get('DB_DATABASE'),
       },
       migrations: {
         naturalSort: true,
@@ -22,18 +22,32 @@ const dbConfig = defineConfig({
     mssql: {
       client: 'mssql',
       connection: {
-        server: env.get('MSSQL_HOST'),
-        port: env.get('MSSQL_PORT'),
-        user: env.get('MSSQL_USER'),
-        password: env.get('MSSQL_PASSWORD'),
-        database: env.get('MSSQL_DATABASE'),
+        server: env.get('DB_HOST'),
+        port: env.get('DB_PORT'),
+        user: env.get('DB_USER'),
+        password: env.get('DB_PASSWORD'),
+        database: env.get('DB_DATABASE'),
       },
       migrations: {
         naturalSort: true,
       },
       pool: {
-        min: 1,
-        max: 4,
+        min: 2,
+        max: 10,
+      },
+      debug: true,
+    },
+    mysql: {
+      client: 'mysql2',
+      connection: {
+        host: env.get('DB_HOST'),
+        port: env.get('DB_PORT'),
+        user: env.get('DB_USER'),
+        password: env.get('DB_PASSWORD'),
+        database: env.get('DB_DATABASE'),
+      },
+      migrations: {
+        naturalSort: true,
       },
       debug: true,
     },

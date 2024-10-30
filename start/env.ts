@@ -13,18 +13,11 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   DB_CONNECTION: Env.schema.enum(['mssql', 'postgres']),
-  // postgres
-  PG_HOST: Env.schema.string({ format: 'host' }),
-  PG_PORT: Env.schema.number(),
-  PG_USER: Env.schema.string(),
-  PG_PASSWORD: Env.schema.string.optional(),
-  PG_DATABASE: Env.schema.string(),
-  // mssql
-  MSSQL_HOST: Env.schema.string({ format: 'host' }),
-  MSSQL_PORT: Env.schema.number(),
-  MSSQL_USER: Env.schema.string(),
-  MSSQL_PASSWORD: Env.schema.string.optional(),
-  MSSQL_DATABASE: Env.schema.string(),
+  DB_HOST: Env.schema.string({ format: 'host' }),
+  DB_PORT: Env.schema.number(),
+  DB_USER: Env.schema.string(),
+  DB_PASSWORD: Env.schema.string.optional(),
+  DB_DATABASE: Env.schema.string(),
   // security
   CRYPTO_ALG: Env.schema.enum(['SHA256', 'SHA384', 'SHA512']),
   AUTH_USER: Env.schema.string(),
