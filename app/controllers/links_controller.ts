@@ -46,19 +46,17 @@ export default class LinksController {
 
   public async createLink({ request }: HttpContext) {
     const newLink = await createLinkValidator.validate(request.body())
-    const expiresNormalized = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
-    if (expiresNormalized && expiresNormalized.diffNow().milliseconds < 0)
-      throw new ApplicationError('Expiration time is invalid')
+    const linkCreated = new Link()
+    linkCreated.expiresAt = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
+    if (linkCreated.isExpired()) throw new ApplicationError('Expiration time is invalid')
     const groupExists = await this.groupExists(newLink.groupId)
     if (!groupExists) throw new ApplicationError('Group does not exist')
     const randomCode = new CodeGenerator().generate()
     const trx = await db.transaction()
-    const linkCreated = new Link()
     linkCreated.name = newLink.name
     linkCreated.url = newLink.url
     linkCreated.code = randomCode
     linkCreated.groupId = newLink.groupId
-    linkCreated.expiresAt = expiresNormalized
     linkCreated.useTransaction(trx)
     await linkCreated.save()
     if (newLink.groupId) await linkCreated.load('linkGroup')
