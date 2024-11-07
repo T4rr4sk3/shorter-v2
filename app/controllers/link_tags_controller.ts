@@ -32,6 +32,7 @@ export default class LinkTagsController {
     const existingTag = await LinkTag.find(id)
     if (!existingTag) throw new ApplicationError('Tag not found')
     existingTag.name = newTag.name
+    existingTag.color = newTag.color
     return existingTag.save()
   }
 
