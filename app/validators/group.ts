@@ -1,5 +1,5 @@
 import vine from '@vinejs/vine'
-import { nameSearchTransform } from './general.js'
+import { nameSearchTransform, paginationSchema } from './general.js'
 
 const groupNameVine = vine.string().trim().maxLength(100)
 
@@ -12,8 +12,14 @@ export const createGroupValidator = vine.compile(
 
 export const updateGroupValidator = createGroupValidator
 
-export const getGroupValidator = vine.compile(
+const nameSearch = vine.object({
+  name: groupNameVine.transform(nameSearchTransform).optional(),
+})
+export const getGroupValidator = vine.compile(nameSearch)
+
+export const getGroupValidatorWithPagination = vine.compile(
   vine.object({
-    name: groupNameVine.transform(nameSearchTransform).optional(),
+    ...nameSearch.getProperties(),
+    ...paginationSchema.getProperties(),
   })
 )

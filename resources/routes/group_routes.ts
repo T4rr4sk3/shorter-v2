@@ -8,3 +8,4 @@ router.post('/group', [LinkGroupsController, 'createGroup']).middleware(middlewa
 router.get('/group/:id', [LinkGroupsController, 'getById']).middleware(middleware.auth())
 router.patch('/group/:id', [LinkGroupsController, 'updateGroup']).middleware(middleware.auth())
 router.delete('/group/:id', [LinkGroupsController, 'deleteGroup']).middleware(middleware.auth())
+router.get('/groups/p', [LinkGroupsController, 'getAllPaginated']).middleware(middleware.auth())

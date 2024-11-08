@@ -1,4 +1,4 @@
-import { nameSearchTransform } from './general.js'
+import { nameSearchTransform, paginationSchema } from './general.js'
 import vine from '@vinejs/vine'
 
 const tagNameVine = vine.string().trim().maxLength(100)
@@ -18,8 +18,14 @@ export const updateTagValidator = vine.compile(
   })
 )
 
-export const getTagValidator = vine.compile(
+const nameSearch = vine.object({
+  name: tagNameVine.transform(nameSearchTransform).optional(),
+})
+export const getTagValidator = vine.compile(nameSearch)
+
+export const getTagValidatorWithPagination = vine.compile(
   vine.object({
-    name: tagNameVine.transform(nameSearchTransform).optional(),
+    ...nameSearch.getProperties(),
+    ...paginationSchema.getProperties(),
   })
 )

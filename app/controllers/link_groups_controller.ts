@@ -1,8 +1,15 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import LinkGroup from '#models/link_group'
-import { createGroupValidator, getGroupValidator, updateGroupValidator } from '#validators/group'
-import { idValidator } from '#validators/general'
+import {
+  createGroupValidator,
+  getGroupValidator,
+  getGroupValidatorWithPagination,
+  updateGroupValidator,
+} from '#validators/group'
+import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { ApplicationError } from '#exceptions/application_error'
+import { PaginatedModel } from '../interfaces/pagination.js'
+import { FIRST_PAGE, idValidator, MINIMUM_PER_PAGE } from '#validators/general'
+import LinkGroup from '#models/link_group'
 
 export default class LinkGroupsController {
   public async getAll({ request }: HttpContext) {
@@ -70,5 +77,36 @@ export default class LinkGroupsController {
     if (!groupId) return true
     const group = await LinkGroup.find(groupId)
     return !!group
+  }
+
+  public async getAllPaginated({ request }: HttpContext) {
+    const {
+      name,
+      page = FIRST_PAGE,
+      perPage = MINIMUM_PER_PAGE,
+    } = await getGroupValidatorWithPagination.validate(request.qs())
+    const groups = await LinkGroup.query()
+      .if(name, (groupQ) => groupQ.whereILike('name', name!))
+      .withCount('links')
+      .preload('parentGroup')
+      .orderBy('id', 'desc')
+      .paginate(page, perPage)
+    return this.convertToPaginatedOutput(groups)
+  }
+
+  public convertToPaginatedOutput(model: ModelPaginatorContract<LinkGroup>): PaginatedModel {
+    const groups = model.all().map((group) => ({
+      ...group.toJSON(),
+      links: group.$extras.links_count,
+    }))
+    return {
+      hasNextPage: model.hasMorePages,
+      currentPage: model.currentPage,
+      firstPage: model.firstPage,
+      lastPage: model.lastPage,
+      length: model.length,
+      total: model.total,
+      data: groups,
+    }
   }
 }

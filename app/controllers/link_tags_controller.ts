@@ -1,11 +1,19 @@
-import { ApplicationError } from '#exceptions/application_error'
-import LinkTag from '#models/link_tag'
-import { idValidator } from '#validators/general'
-import { createTagValidator, getTagValidator, updateTagValidator } from '#validators/tag'
 import type { HttpContext } from '@adonisjs/core/http'
+import type { PaginatedModel } from '../interfaces/pagination.js'
+
+import {
+  createTagValidator,
+  getTagValidator,
+  getTagValidatorWithPagination,
+  updateTagValidator,
+} from '#validators/tag'
+import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
+import { ApplicationError } from '#exceptions/application_error'
+import { FIRST_PAGE, idValidator, MINIMUM_PER_PAGE } from '#validators/general'
+import LinkTag from '#models/link_tag'
 
 export default class LinkTagsController {
-  async getAll({ request }: HttpContext) {
+  public async getAll({ request }: HttpContext) {
     const { name } = await getTagValidator.validate(request.qs())
     const tags = await LinkTag.query()
       .withCount('links')
@@ -49,5 +57,34 @@ export default class LinkTagsController {
     if (!existingTag) throw new ApplicationError('Tag not found')
     await existingTag.load('links', (linkQ) => linkQ.preload('linkGroup').orderBy('id'))
     return existingTag
+  }
+
+  public async getAllPaginated({ request }: HttpContext) {
+    const {
+      name,
+      page = FIRST_PAGE,
+      perPage = MINIMUM_PER_PAGE,
+    } = await getTagValidatorWithPagination.validate(request.qs())
+    const tags = await LinkTag.query()
+      .withCount('links')
+      .if(name, (tagQ) => {
+        tagQ.whereILike('name', name!)
+      })
+      .orderBy('id', 'desc')
+      .paginate(page, perPage)
+    return this.convertToPaginatedOutput(tags)
+  }
+
+  private convertToPaginatedOutput(model: ModelPaginatorContract<LinkTag>): PaginatedModel {
+    const tags = model.all().map((tag) => ({ ...tag.toJSON(), links: tag.$extras.links_count }))
+    return {
+      hasNextPage: model.hasMorePages,
+      currentPage: model.currentPage,
+      firstPage: model.firstPage,
+      lastPage: model.lastPage,
+      length: model.length,
+      total: model.total,
+      data: tags,
+    }
   }
 }
