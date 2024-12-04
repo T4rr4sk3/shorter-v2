@@ -8,3 +8,4 @@ router.post('/link', [LinksController, 'createLink']).middleware(middleware.auth
 router.get('/link/:id', [LinksController, 'getById']).middleware(middleware.auth())
 router.patch('/link/:id', [LinksController, 'updateLink']).middleware(middleware.auth())
 router.delete('/link/:id', [LinksController, 'deleteLink']).middleware(middleware.auth())
+router.get('/links/p', [LinksController, 'getAllPaginated']).middleware(middleware.auth())

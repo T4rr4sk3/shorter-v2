@@ -9,11 +9,12 @@ export default class LinkGroupTreesController {
     const linkId = await idValidator.validate(request.param('linkId'))
     const existingLink = await Link.find(linkId)
     if (!existingLink) throw new ApplicationError('Link not found', 404)
-    const linkPath = await this.getGroupPath(existingLink.groupId)
+    const { paths: linkPath, groups } = await this.getGroupPath(existingLink.groupId)
     linkPath.push(existingLink.name)
     return {
       link: existingLink,
       path: linkPath.join('/'),
+      groupsOnPath: groups,
     }
   }
 
@@ -21,25 +22,31 @@ export default class LinkGroupTreesController {
     const groupId = await idValidator.validate(request.param('groupId'))
     const startingGroup = await LinkGroup.find(groupId)
     if (!startingGroup) throw new ApplicationError('Group not found', 404)
-    const groupPath = await this.getGroupPath(startingGroup.parentGroupId)
-    groupPath.push(startingGroup.name)
+    const { paths, groups } = await this.getGroupPath(startingGroup.parentGroupId)
+    paths.push(startingGroup.name)
     return {
       group: startingGroup,
-      path: groupPath.join('/'),
+      path: paths.join('/'),
+      groupsOnPath: groups,
     }
   }
 
   private async getGroupPath(groupId: number | null) {
     const paths: string[] = []
+    const groups: LinkGroup[] = []
     let parent = groupId
     while (parent !== null) {
       const parentGroup = await LinkGroup.find(parent)
       if (!parentGroup) break
       parent = parentGroup.parentGroupId
+      groups.unshift(parentGroup)
       paths.unshift(parentGroup.name)
     }
     paths.unshift('/root')
-    return paths
+    return {
+      paths,
+      groups,
+    }
   }
 
   public async getLinksAndGroupsByParentGroupId({ request }: HttpContext) {

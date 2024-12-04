@@ -1,5 +1,5 @@
 import vine from '@vinejs/vine'
-import { idSchema, nameSearchTransform } from './general.js'
+import { idSchema, nameSearchTransform, paginationSchema } from './general.js'
 
 const linkNameVine = vine.string().trim().maxLength(100)
 const linkTagsVine = vine.array(idSchema).maxLength(5).optional()
@@ -25,12 +25,19 @@ export const updateLinkValidator = vine.compile(
   })
 )
 
-export const getLinkValidator = vine.compile(
+const linkSearch = vine.object({
+  name: linkNameVine.transform(nameSearchTransform).optional(),
+  groupId: idSchema.optional(),
+  noGroup: vine.boolean().optional(),
+  tag: idSchema.optional(),
+  tags: vine.array(idSchema).optional(),
+})
+
+export const getLinkValidator = vine.compile(linkSearch)
+
+export const getLinkValidatorWithPagination = vine.compile(
   vine.object({
-    name: linkNameVine.transform(nameSearchTransform).optional(),
-    groupId: idSchema.optional(),
-    noGroup: vine.boolean().optional(),
-    tag: idSchema.optional(),
-    tags: vine.array(idSchema).optional(),
+    ...linkSearch.getProperties(),
+    ...paginationSchema.getProperties(),
   })
 )

@@ -1,13 +1,19 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
-import { createLinkValidator, getLinkValidator, updateLinkValidator } from '#validators/link'
+import {
+  createLinkValidator,
+  getLinkValidator,
+  getLinkValidatorWithPagination,
+  updateLinkValidator,
+} from '#validators/link'
 import { ApplicationError } from '#exceptions/application_error'
 import { CodeGenerator } from '../domain/code_generator.js'
-import { idValidator } from '#validators/general'
+import { FIRST_PAGE, idValidator, MINIMUM_PER_PAGE } from '#validators/general'
 import db from '@adonisjs/lucid/services/db'
 import LinkGroup from '#models/link_group'
 import { DateTime } from 'luxon'
 import Link from '#models/link'
+import { PaginatedModel } from '../interfaces/pagination.js'
 
 export default class LinksController {
   public async getAll({ request }: HttpContext) {
@@ -92,6 +98,46 @@ export default class LinksController {
     const existingLink = await Link.find(linkId)
     await existingLink?.delete()
     return null
+  }
+
+  public async getAllPaginated({ request }: HttpContext) {
+    const {
+      page = FIRST_PAGE,
+      perPage = MINIMUM_PER_PAGE,
+      ...options
+    } = await getLinkValidatorWithPagination.validate(request.qs())
+    const model = await Link.query()
+      .if(options.name, (linkQ) => {
+        linkQ.whereILike('name', options.name!)
+      })
+      .if(
+        options.groupId,
+        (linkQ) => {
+          linkQ.where('groupId', options.groupId!)
+        },
+        (linkQ) => {
+          if (options.noGroup) linkQ.whereNull('groupId')
+        }
+      )
+      .if(options.tag, (linkQ) => {
+        linkQ.whereHas('linkTags', (tagQ) => tagQ.where('id', options.tag!))
+      })
+      .if(options.tags, (linkQ) => {
+        linkQ.whereHas('linkTags', (tagQ) => tagQ.whereIn('id', options.tags || []))
+      })
+      .preload('linkTags', (tagsQ) => tagsQ.orderBy('id', 'desc'))
+      .preload('linkGroup')
+      .orderBy('id', 'desc')
+      .paginate(page, perPage)
+    return {
+      hasNextPage: model.hasMorePages,
+      currentPage: model.currentPage,
+      firstPage: model.firstPage,
+      lastPage: model.lastPage,
+      length: model.length,
+      total: model.total,
+      data: model.all(),
+    } as PaginatedModel
   }
 
   private async groupExists(groupId: number | null) {
