@@ -31,6 +31,12 @@ export default class LinksController {
           if (options.noGroup) linkQ.whereNull('groupId')
         }
       )
+      .if(options.expired === false, (linkQ) =>
+        linkQ.where('expiresAt', '>', DateTime.local().toSQLDate()).orWhereNull('expiresAt')
+      )
+      .if(options.expired === true, (linkQ) =>
+        linkQ.where('expiresAt', '<=', DateTime.local().toSQLDate())
+      )
       .if(options.tag, (linkQ) => {
         linkQ.whereHas('linkTags', (tagQ) => tagQ.where('id', options.tag!))
       })
@@ -80,6 +86,7 @@ export default class LinksController {
     const trx = await db.transaction()
     existingLink.useTransaction(trx)
     existingLink.name = newLink.name
+    existingLink.expiresAt = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
     if (newLink.groupId) {
       existingLink.groupId = newLink.groupId
     } else {
