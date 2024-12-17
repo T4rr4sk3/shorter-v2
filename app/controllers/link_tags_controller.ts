@@ -29,6 +29,8 @@ export default class LinkTagsController {
 
   public async createTag({ request }: HttpContext) {
     const newTag = await createTagValidator.validate(request.body())
+    const tagNameInUse = await this.tagNameIsInUse(newTag.name)
+    if (tagNameInUse) throw new ApplicationError('Tag name is in use')
     if (!newTag.color) newTag.color = '#42A5F5'
     return LinkTag.create(newTag)
   }
@@ -39,6 +41,10 @@ export default class LinkTagsController {
     const [id, newTag] = await Promise.all([validId, validBody])
     const existingTag = await LinkTag.find(id)
     if (!existingTag) throw new ApplicationError('Tag not found')
+    if (newTag.name !== existingTag.name) {
+      const tagNameInUse = await this.tagNameIsInUse(newTag.name)
+      if (tagNameInUse) throw new ApplicationError('Tag name is in use')
+    }
     existingTag.name = newTag.name
     existingTag.color = newTag.color
     return existingTag.save()
@@ -86,5 +92,10 @@ export default class LinkTagsController {
       total: model.total,
       data: tags,
     }
+  }
+
+  private async tagNameIsInUse(tagName: string) {
+    const tag = await LinkTag.findBy('name', tagName)
+    return Boolean(tag)
   }
 }

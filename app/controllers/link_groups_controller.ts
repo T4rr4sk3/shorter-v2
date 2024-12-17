@@ -29,6 +29,8 @@ export default class LinkGroupsController {
     const newLinkGroup = await createGroupValidator.validate(request.body())
     const parentGroupExists = await this.existsGroup(newLinkGroup.parentGroupId)
     if (!parentGroupExists) throw new ApplicationError('Parent group not exists')
+    const groupNameInUse = await this.groupNameIsInUse(newLinkGroup.name)
+    if (groupNameInUse) throw new ApplicationError('Group name is in use')
     const groupCreated = await LinkGroup.create(newLinkGroup)
     if (groupCreated.parentGroupId) await groupCreated.load('parentGroup')
     return groupCreated
@@ -41,6 +43,10 @@ export default class LinkGroupsController {
     if (id === newGroup.parentGroupId) throw new ApplicationError('Circular reference not allowed')
     const existingGroup = await LinkGroup.find(id)
     if (!existingGroup) throw new ApplicationError('Group not found')
+    if (newGroup.name !== existingGroup.name) {
+      const groupNameInUse = await this.groupNameIsInUse(newGroup.name)
+      if (groupNameInUse) throw new ApplicationError('Group name is in use')
+    }
     const newParentGroup = newGroup.parentGroupId
       ? await LinkGroup.find(newGroup.parentGroupId)
       : null
@@ -73,10 +79,15 @@ export default class LinkGroupsController {
     return existingGroup
   }
 
-  async existsGroup(groupId: number | undefined): Promise<boolean> {
+  private async existsGroup(groupId: number | undefined): Promise<boolean> {
     if (!groupId) return true
     const group = await LinkGroup.find(groupId)
-    return !!group
+    return Boolean(group)
+  }
+
+  private async groupNameIsInUse(groupName: string) {
+    const group = await LinkGroup.findBy('name', groupName)
+    return Boolean(group)
   }
 
   public async getAllPaginated({ request }: HttpContext) {

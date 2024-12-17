@@ -47,4 +47,9 @@ export default class Link extends BaseModel {
     const difference = this.expiresAt.diffNow('days')
     return difference.get('days') < 0
   }
+
+  public isExpiresValid() {
+    if (!this.expiresAt) return true
+    return this.expiresAt.isValid
+  }
 }

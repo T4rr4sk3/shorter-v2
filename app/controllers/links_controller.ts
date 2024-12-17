@@ -60,7 +60,10 @@ export default class LinksController {
     const newLink = await createLinkValidator.validate(request.body())
     const linkCreated = new Link()
     linkCreated.expiresAt = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
-    if (linkCreated.isExpired()) throw new ApplicationError('Expiration time is invalid')
+    if (linkCreated.isExpired() || !linkCreated.isExpiresValid())
+      throw new ApplicationError('Expiration time is invalid')
+    const linkNameInUse = await this.linkNameIsInUse(newLink.name)
+    if (linkNameInUse) throw new ApplicationError('Link name is in use')
     const groupExists = await this.groupExists(newLink.groupId)
     if (!groupExists) throw new ApplicationError('Group does not exist')
     const randomCode = new CodeGenerator().generate()
@@ -83,10 +86,15 @@ export default class LinksController {
     const newLink = await updateLinkValidator.validate(request.body())
     const existingLink = await Link.find(linkId)
     if (!existingLink) throw new ApplicationError('Link not found')
+    if (existingLink.name !== newLink.name) {
+      const linkNameInUse = await this.linkNameIsInUse(newLink.name)
+      if (linkNameInUse) throw new ApplicationError('Link name is in use')
+    }
     const trx = await db.transaction()
     existingLink.useTransaction(trx)
     existingLink.name = newLink.name
     existingLink.expiresAt = newLink.expiresIn ? DateTime.fromISO(newLink.expiresIn) : null
+    if (!existingLink.isExpiresValid()) throw new ApplicationError('Link expiration is invalid')
     if (newLink.groupId) {
       existingLink.groupId = newLink.groupId
     } else {
@@ -151,5 +159,10 @@ export default class LinksController {
     if (!groupId) return true
     const group = await LinkGroup.find(groupId)
     return Boolean(group)
+  }
+
+  private async linkNameIsInUse(linkName: string) {
+    const link = await Link.findBy('name', linkName)
+    return Boolean(link)
   }
 }

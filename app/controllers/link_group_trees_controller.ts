@@ -60,8 +60,8 @@ export default class LinkGroupTreesController {
     groupId: number
   ): Promise<GroupAndChildrenWithLinks> {
     const getParentGroup = LinkGroup.find(groupId)
-    const getLinks = Link.query().where('groupId', groupId)
-    const getGroups = LinkGroup.query().where('parentGroupId', groupId)
+    const getLinks = Link.query().where('groupId', groupId).preload('linkTags').orderBy('name')
+    const getGroups = LinkGroup.query().where('parentGroupId', groupId).orderBy('name')
     return Promise.all([getParentGroup, getGroups, getLinks]).then(
       ([parentGroup, childrenGroup, childrenLink]) => {
         return { parentGroup, childrenGroup, childrenLink }
@@ -70,8 +70,8 @@ export default class LinkGroupTreesController {
   }
 
   private async getRootGroupAndChildrenWithLinks(): Promise<GroupAndChildrenWithLinks> {
-    const getLinks = Link.query().whereNull('groupId')
-    const getGroups = LinkGroup.query().whereNull('parentGroupId')
+    const getLinks = Link.query().whereNull('groupId').preload('linkTags').orderBy('name')
+    const getGroups = LinkGroup.query().whereNull('parentGroupId').orderBy('name')
     const [childrenGroup, childrenLink] = await Promise.all([getGroups, getLinks])
     return { parentGroup: null, childrenGroup, childrenLink }
   }
@@ -84,13 +84,13 @@ export default class LinkGroupTreesController {
   }
 
   private async getRootGroupAndChildren(): Promise<GroupAndChildren> {
-    const childrenGroup = await LinkGroup.query().whereNull('parentGroupId')
+    const childrenGroup = await LinkGroup.query().whereNull('parentGroupId').orderBy('name')
     return { parentGroup: null, childrenGroup }
   }
 
   private async getGroupAndChildrenByGroupId(groupId: number): Promise<GroupAndChildren> {
     const getParentGroup = LinkGroup.find(groupId)
-    const getGroups = LinkGroup.query().where('parentGroupId', groupId)
+    const getGroups = LinkGroup.query().where('parentGroupId', groupId).orderBy('name')
     return Promise.all([getParentGroup, getGroups]).then(([parentGroup, childrenGroup]) => {
       return { parentGroup, childrenGroup }
     })
