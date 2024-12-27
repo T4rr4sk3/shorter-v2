@@ -1,5 +1,6 @@
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import ModelSerializer from '../domain/model_serializer.js'
 import { DateTime } from 'luxon'
 import Link from './link.js'
 
@@ -15,7 +16,10 @@ export default class LinkGroup extends BaseModel {
   @column({ columnName: 'grupo_id' })
   declare parentGroupId: number | null
 
-  @column.dateTime({ autoCreate: true, columnName: 'criado_em' })
+  @column.dateTime({
+    columnName: 'criado_em',
+    serialize: ModelSerializer.serializeDate,
+  })
   declare createdAt: DateTime
 
   @hasMany(() => Link, { foreignKey: 'groupId' })

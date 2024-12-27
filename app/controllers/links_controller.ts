@@ -6,14 +6,15 @@ import {
   getLinkValidatorWithPagination,
   updateLinkValidator,
 } from '#validators/link'
-import { ApplicationError } from '#exceptions/application_error'
-import { CodeGenerator } from '../domain/code_generator.js'
 import { FIRST_PAGE, idValidator, MINIMUM_PER_PAGE } from '#validators/general'
+import { ApplicationError } from '#exceptions/application_error'
+import { PaginatedModel } from '../interfaces/pagination.js'
+import { CodeGenerator } from '../domain/code_generator.js'
 import db from '@adonisjs/lucid/services/db'
 import LinkGroup from '#models/link_group'
+import LinkTag from '#models/link_tag'
 import { DateTime } from 'luxon'
 import Link from '#models/link'
-import { PaginatedModel } from '../interfaces/pagination.js'
 
 export default class LinksController {
   public async getAll({ request }: HttpContext) {
@@ -38,10 +39,23 @@ export default class LinksController {
         linkQ.where('expiresAt', '<=', DateTime.local().toSQLDate())
       )
       .if(options.tag, (linkQ) => {
-        linkQ.whereHas('linkTags', (tagQ) => tagQ.where('id', options.tag!))
+        linkQ.whereRaw(
+          `exists ( select * from ${LinkTag.table} as tag
+            inner join ${LinkTag.pivotLinksHasTags} on tag.id = ${LinkTag.getPivotLinksHasTagsTagId()}
+            where (tag.id = ?) and (${Link.table}.id = ${LinkTag.getPivotLinksHasTagsLinkId()}) )`,
+          [options.tag!]
+        )
+        //linkQ.whereHas('linkTags', (tagQ) => tagQ.where('id', options.tag!))
       })
       .if(options.tags, (linkQ) => {
-        linkQ.whereHas('linkTags', (tagQ) => tagQ.whereIn('id', options.tags || []))
+        const queryBindingsIn = options.tags?.map(() => '?').join() || ''
+        linkQ.whereRaw(
+          `exists ( select * from ${LinkTag.table} as tag
+            inner join ${LinkTag.pivotLinksHasTags} on tag.id = ${LinkTag.getPivotLinksHasTagsTagId()}
+            where (tag.id in (${queryBindingsIn})) and (${Link.table}.id = ${LinkTag.getPivotLinksHasTagsLinkId()}) )`,
+          options.tags || []
+        )
+        //linkQ.whereHas('linkTags', (tagQ) => tagQ.whereIn('id', options.tags || []))
       })
       .preload('linkTags', (tagsQ) => tagsQ.orderBy('id', 'desc'))
       .preload('linkGroup')
