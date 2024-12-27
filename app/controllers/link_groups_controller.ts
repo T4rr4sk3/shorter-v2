@@ -10,6 +10,7 @@ import { ApplicationError } from '#exceptions/application_error'
 import { PaginatedModel } from '../interfaces/pagination.js'
 import { FIRST_PAGE, idValidator, MINIMUM_PER_PAGE } from '#validators/general'
 import LinkGroup from '#models/link_group'
+import Link from '#models/link'
 
 export default class LinkGroupsController {
   public async getAll({ request }: HttpContext) {
@@ -65,8 +66,12 @@ export default class LinkGroupsController {
   public async deleteGroup({ request }: HttpContext) {
     const id = await idValidator.validate(request.param('id'))
     const existingGroup = await LinkGroup.find(id)
-    await existingGroup?.delete()
-    return null
+    if (!existingGroup) return
+    const deletes = [
+      LinkGroup.query().update({ parentGroupId: null }).where('parentGroupId', id),
+      Link.query().update({ groupId: null }).where('groupId', id),
+    ]
+    await Promise.all(deletes).then(() => existingGroup.delete())
   }
 
   public async getById({ request }: HttpContext) {
