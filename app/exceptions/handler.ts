@@ -1,6 +1,7 @@
 import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import { ApplicationError } from './application_error.js'
 import app from '@adonisjs/core/services/app'
+import { RequestError } from 'tedious'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   protected debug = !app.inProduction
@@ -20,6 +21,14 @@ export default class HttpExceptionHandler extends ExceptionHandler {
         messages: (error as any).messages,
         name: 'ValidationError',
         status: 400,
+      })
+    }
+
+    if (error instanceof RequestError) {
+      return ctx.response.status(500).send({
+        message: error.message + ` (${error.class || '--'})`,
+        name: 'DatabaseError',
+        status: 500,
       })
     }
 
